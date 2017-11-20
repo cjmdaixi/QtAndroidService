@@ -1,0 +1,8 @@
+#include <QTime>
+
+class RemoteClientServer
+{
+    SLOT(setLightOpen(QString printerID, bool lightOpen))
+	SLOT(pause(QString printerID))
+	SLOT(resume(QString printerID))
+}

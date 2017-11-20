@@ -1,0 +1,9 @@
+class Service
+{
+    SIGNAL(remoteConnected())
+    SIGNAL(remoteDisconnected())
+    SIGNAL(connectTimeout())
+    SIGNAL(info(QString msg))
+    SLOT(void test(QString msg))
+    SLOT(connectRemote(QString serverIP, int serverPort))
+}

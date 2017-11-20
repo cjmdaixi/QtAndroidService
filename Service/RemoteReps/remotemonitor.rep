@@ -1,0 +1,42 @@
+#include <QTime>
+
+POD RemoteTaskInfo(QString taskName, int layerCount)
+POD RemotePrinterInfo(QString id, QString model)
+POD RemoteActionResult(bool result, int error, QString detail)
+
+class RemoteMonitor
+{
+	ENUM RemoteStatus {Idle, Printing}
+	//----------PROP----------
+	// 当前打印机状态
+	PROP(RemoteStatus remoteStatus = Idle READONLY)
+	// 是否连接远程服务器
+    PROP(bool serverConnected = false READONLY)
+	// 打印机相关信息（ID，型号等）
+	PROP(RemotePrinterInfo printerInfo READONLY)
+	// 本地IP地址
+	PROP(QString localIP READONLY)
+	// 服务器IP地址
+	PROP(QString serverIP READONLY)
+	// 服务器端口号
+	PROP(int serverPort = 8088 READONLY)
+	// 当前任务信息，包括：任务名称，总层数等
+	PROP(RemoteTaskInfo currentTaskInfo READONLY)
+	// 当前任务剩余打印时间
+	PROP(QTime remainingTime READONLY)
+	// 当前打印层序号
+	PROP(int currentLayerIndex READONLY)
+	// 当前打印层图像
+	PROP(QByteArray currentLayerImage READONLY)
+	// 当前照明灯状态
+	PROP(bool lightOpen = false)
+	//----------SIGNAL----------
+	// 调试信息
+	SIGNAL(debugInfo(QString funcName, QString msg))
+	SIGNAL(printStarted(QString taskName))
+	SIGNAL(printFinished(QString taskName, RemoteActionResult result))
+	//----------SLOT----------
+	SLOT(updateCurrentLayerImage(QString imagePath))
+	SLOT(pause())
+	SLOT(resume())
+}

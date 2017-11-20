@@ -1,0 +1,168 @@
+#include<QVariantList>
+#include<QVariantMap>
+#include<QMatrix4x4>
+#include<QTime>
+
+POD BoundingBox(float minX, float minY, float minZ, float maxX, float maxY, float maxZ)
+POD ModelInfo(QString name, QString path, QMatrix4x4 matrix, BoundingBox box, QString featureStrategy)
+POD ActionResult(bool result, int error, QString detail)
+POD MachineDimension(float x, float y, float z)
+POD TaskInfo(QString taskName, int layerCount, float totalZ, float bottomZ)
+POD StartupStatus(bool allOK, bool powerOK, bool axisOK, bool laserOK)
+
+class PrintService
+{
+ENUM WorkStatus{
+	Printer_UnInit = 0,   // 软件未初始化
+	Printer_UnStart = 1,  // 设备未启动
+	Printer_Idle = 2,     // 设备空闲
+	Printer_Printing = 3, // 打印中
+	Printer_Alarm = 4     // 硬件报警 
+}
+	// 设备属性
+    PROP(bool scannerPowerOpen)         // 振镜电机电源
+    PROP(bool lightOpen)                // 照明灯
+    PROP(bool suckOpen)                 // 吸附泵
+    PROP(bool heatOpen)                 // 加热
+	PROP(float scraperSpeed)            // 刮刀速度 mm/s
+	PROP(float scraperPos READONLY)     // 刮刀当前位置 mm  （保留1位显示）
+	PROP(bool scraperIsMoving READONLY) // 刮刀运动状态
+	PROP(bool scraperHasHome READONLY)  // 刮刀是否已初始化（寻原点）
+	PROP(QString scraperLimitStatus READONLY) // 刮刀限位状态 正限位:"LIMITPOSITIVE" 负限位:"LIMITNEGATIVE" 原点限位:"LIMITHOME" 未触发:"LIMITNONE";
+	PROP(float scraperMaximum)          // 刮刀最大位置 （软限位,距原点距离）
+	PROP(float scraperOffset)           // 刮刀零位
+	PROP(float floatSpeed)                    // 浮子速度 mm/s （一般只设整数）
+	PROP(float floatPos READONLY)             // 浮子当前位置 mm （2位）
+	PROP(bool floatIsMoving READONLY)         // 浮子运动状态
+	PROP(bool floatHasHome READONLY)          // 浮子是否已初始化 （寻原点）
+	PROP(float floatMaximum)                  // 浮子最大位置 （浮子行程 算树脂余量要用）
+	PROP(QString floatLimitStatus READONLY)   // 浮子限位状态
+	PROP(float trayStirSpeed)                 // 托盘搅拌速度 mm/s
+	PROP(float traySpeed)                     // 托盘速度 mm/s （一般只设整数）
+	PROP(float trayPos READONLY)              // 托盘当前位置 mm/s （保留3位显示）
+	PROP(bool trayIsMoving READONLY)          // 托盘运动状态
+	PROP(bool trayHasHome READONLY)           // 托盘是否已初始化 （寻原点）
+	PROP(QString trayLimitStatus READONLY)    // 托盘限位状态
+	PROP(float trayMaximum)                   // 托盘最大位置 （软限位 距原点距离）
+	PROP(float trayOffset)                    // 托盘零位 
+	PROP(float traySafePos)                   // 托盘安全高度 （避开刮刀）
+	PROP(float trayPickupPos)                 // 托盘取件高度
+	PROP(float focusSpeed)                    // 光斑轴速度 pulse/s
+	PROP(float focusPos READONLY)             // 光斑轴当前位置 pulse
+	PROP(bool focusIsMoving READONLY)         // 光斑轴运动状态
+	PROP(bool focusHasHome READONLY)          // 光斑是否已初始化（寻原点）
+	PROP(QString focusLimitStatus READONLY)   // 光斑轴限位状态
+	PROP(float envTemp READONLY)              // 当前环境温度 ℃
+	PROP(float envHum READONLY)               // 当前环境湿度 %rh
+	PROP(float resinTargetTemp)               // 树脂温度目标值
+	PROP(float resinCurTemp READONLY)         // 树脂温度当前值
+	PROP(float targetLevel)                   // 目标液位值 （±10之间，一般接近0）
+	PROP(float currentLevel READONLY)         // 当前液位值
+	PROP(float levelTolerance)                // 液位容差 （打印时液位超出此偏差会进行液位调节）
+	PROP(float powerMeterK0)                  // 功率计系数K0
+	PROP(float powerMeterK1)                  // 功率计系数K1
+	PROP(float powerMeterK2)                  // 功率计系数K2
+	PROP(QString scannerCtbFile)              // 振镜卡标定文件
+	PROP(QString scannerHexFile)              // 振镜卡DSP Program文件 （振镜卡类型：3D 2D）
+	PROP(QPoint scannerXYPos READONLY)        // 振镜当前位置 （振镜坐标系 bit）
+	PROP(QPointF scannerWorkPos READONLY)     // 振镜当前位置 （工件坐标系 mm）
+	PROP(int scannerResetX)                   // 振镜待命位置x  （即功率检测位置）
+	PROP(int scannerResetY)                   // 振镜待命位置y
+	PROP(int scannerOffsetX)                  // 振镜坐标系x偏移量
+	PROP(int scannerOffsetY)                  // 振镜坐标系y偏移量
+	PROP(float scannerRotation)               // 振镜旋转角度（相对于工件坐标系）
+	PROP(float scannerScaleX)                 // 振镜x缩放 （1mm对应的bit值）
+	PROP(float scannerScaleY)                 // 振镜y缩放
+	PROP(int contourFrequency)                
+	PROP(float contourDutyCycle)
+	PROP(int contourZOutPos)
+	PROP(int contourSpeed)
+	PROP(int supportFrequency)
+	PROP(float supportDutyCycle)
+	PROP(int supportZOutPos)
+	PROP(int supportSpeed)
+	PROP(int fillingFrequency)
+	PROP(float fillingDutyCycle)
+	PROP(int fillingZOutPos)
+	PROP(int fillingSpeed)
+	PROP(int shellFrequency)
+	PROP(float shellDutyCycle)
+	PROP(int shellZOutPos)
+	PROP(int shellSpeed)
+	PROP(int debugFrequency)
+	PROP(float debugDutyCycle)
+	PROP(int debugZOutPos)
+	PROP(int debugSpeed)
+	PROP(int jumpSpeed)
+	PROP(int zOutSpeed)
+	PROP(int jumpDelay)
+	PROP(int markDelay)
+	PROP(int polyDelay)
+	PROP(int onDelay)
+	PROP(int offDelay)
+	PROP(bool enableVariablePolygonDelay)
+	PROP(float scannerZTableA)   // 动态聚焦镜系数a
+	PROP(float scannerZTableB)   // 动态聚焦镜系数b
+	PROP(float scannerZTableC)   // 动态聚焦镜系数c
+	PROP(int minJumpDelay)
+	PROP(int edgeLevel)
+	PROP(int variableJumpLength)                 
+	PROP(bool laserOn)                           // 激光开启状态 （仅开关光按钮动作时改变，扫描时不更新）
+	PROP(bool busy READONLY)                     // 系统是否正忙
+	PROP(QStringList flowStrategies READONLY)    // 打印流程策略
+	PROP(QStringList featureStrategies READONLY) // 扫描特征策略
+	PROP(QStringList tasks READONLY)   // 系统当前的打印任务列表 （目前打印时不接收新的任务）
+	PROP(TaskInfo taskInfo READONLY)   // 当前打印任务信息 （打印准备后反馈）
+	PROP(int currentLayer READONLY)    // 当前打印到第多少层 （打印一层开始时反馈）
+	PROP(MachineDimension dimension READONLY) // 设备成型范围 （注册设备信息时自动确定机型尺寸）
+	PROP(QString plcSerialPort)        // PLC通信端口
+	PROP(QString plcBaudrate)          // PLC通信波特率
+	PROP(QString beginTime READONLY)   // 打印开始时间 (QDateTime Qt::LocalDate)
+	PROP(int remainingTime READONLY)   // 打印剩余时间 (秒)
+	PROP(WorkStatus workStatus READONLY) // 打印机工作状态
+	PROP(StartupStatus startupStatus READONLY) // 打印机启动状态
+	// 用户提示
+	SIGNAL(info(QVariantMap printInfo)) // 打印时的提示信息
+	SIGNAL(debugInfo(QString funcName, QString info)) // 调试信息输出
+	SIGNAL(error(QVariantMap printError))
+	// 打印功能
+	SLOT(abort()) // 终止打印
+	SLOT(prepare(QList<ModelInfo> modelInfoList, QString taskName, QString flowStrategy)) // 进行打印准备
+	SIGNAL(prepareBegin(QString taskName))
+	SIGNAL(prepareFinish(QString taskName, ActionResult result))
+	SLOT(print(int layerIdx = 0))  // 开始打印 (重新打印:0 续上次打印：上次停止时层号)
+	SIGNAL(printBegin(QString taskName))
+	SIGNAL(printFinish(QString taskName, ActionResult result))
+	SIGNAL(layerDataPrepared(QString memoryKey)) // 用CliFile中readSharedMomory方法读数据
+	SIGNAL(layerBegin(int layerIdx, float layerZ))
+	SIGNAL(layerFinish(int layerIdx, float layerZ))
+	// 常用功能
+	SLOT(reset())                          // 复位所有电机
+	SLOT(startup())                        // 系统一键开机
+	SIGNAL(startupFinish(StartupStatus status))               
+	SLOT(checkLaserPower())                // 检测激光功率 checkPowerFinish反馈检测值
+	SIGNAL(checkPowerFinish(float power)) 
+	SLOT(adjustResinLevel())               // 液位调节至标准液位
+	SIGNAL(adjustResinLevelFinish()) 
+	SLOT(stir(int count = 1))              // 搅拌树脂（点复位可停止）
+	SIGNAL(stirFinish())
+	SLOT(pickup())                         // 取件（托盘升至取件高度）
+	SIGNAL(pickupFinish())
+	SLOT(checkResinAmount())               // 检查树脂余量 （% checkResinAmountFinish反馈检测值）
+	SIGNAL(checkResinAmountFinish(float amount))
+	SLOT(cleanScraper())                   // 清理刮刀
+	SIGNAL(cleanScraperFinish())
+	SLOT(cleanBubble())                    // 清理气泡
+	SIGNAL(cleanBubbleFinish())
+	// 调机功能
+	SLOT(axisMoveRel(QString axis, float distance)) // 轴相对运动 mm 刮刀:"AXISSCRAPER" 浮子:"AXISFLOAT" 托盘:"AXISTRAY" 光斑轴:"AXISFOCUS";
+	SLOT(axisMoveAbs(QString axis, float pos)) // 轴运动至目标位置 mm
+	SLOT(axisHome(QString axis))           // 轴寻找原点
+	SLOT(axisStop(QString axis))           // 轴停止运动
+	SLOT(scanOneLayer(QList<ModelInfo> modelInfoList, QString taskName, QString flowStrategy, int layerIdx, int count=1)) // 扫描一层 （调机用）
+	SLOT(galvoJumpF(QPointF pos))          // 振镜跳转（工件坐标系）
+	SLOT(galvoJump(QPoint pos))            // 振镜跳转（振镜坐标系）
+	SLOT(galvoMarkF(QList<QPointF> points))
+	SLOT(powerAutoCorrect(int startIndex))
+	SIGNAL(powerAutoCorrectProgress(bool finish, int index, int count))
+}
