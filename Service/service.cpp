@@ -7,6 +7,7 @@ QString getLocalIP()
 {
     QTcpSocket socket;
     // 通过连接外网IP地址，从而自动获得本机IP地址
+    // comments again.
     socket.connectToHost("8.8.8.8", 53); // google DNS, or something else reliable
     if (socket.waitForConnected())
     {

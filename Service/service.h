@@ -8,6 +8,7 @@
 #include "rep_service_source.h"
 #include "rep_remoteclientserver_replica.h"
 
+// comments...
 class Service : public ServiceSource
 {
     Q_OBJECT
